@@ -1,0 +1,8 @@
+#This is used to filter out the setup module
+#ansible-playbook -i hosts date_time.yml
+
+---
+- hosts: test
+  tasks:
+#  - debug: msg="The server Date/Time is {{ ansible_date_time.day }}"  ## ".day" filters out more and only shows day option
+   - debug: msg="The server Date is {{ ansible_date_time.date }} Time {{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}"

@@ -1,0 +1,18 @@
+##This playbook shows the use of VARIABLES and REGEX
+---
+- hosts: test
+  tasks:
+  - name: Create file if it doesn't exist
+    file: 
+      state: touch 
+      path: /home/shourabh/hostname.conf
+
+  - name: If line not there then add it
+    lineinfile: 
+      state: present
+      dest: /home/shourabh/hostname.conf
+      line: Hostname={{ansible_hostname}}
+
+#      regexp: ^Hostname=*
+#      insertafter: ^# Hostname=
+#      line: Hostname={{ ansible_hostname }}

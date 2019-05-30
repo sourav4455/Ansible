@@ -1,0 +1,27 @@
+---
+- hosts: test
+  sudo: yes
+  gather_facts: no
+  tasks: 
+  - name: Create a VG
+    lvg: pvs=/dev/sdb vg=vg_test state=present 
+
+  - name: Create LV
+    lvol: vg=vg_test lv=lv_test size=70M state=present force=yes
+    ignore_errors: yes
+    tags: 
+      - extend
+
+  - name: Resizing FS
+    command: resize2fs /dev/vg_test/lv_test
+    tags:
+      - extend
+
+  - name: Creating filesystem
+    filesystem: fstype=ext3 dev=/dev/vg_test/lv_test 
+
+  - name: Mount the Logical volume
+    mount: name=/test src=/dev/vg_test/lv_test fstype=ext3 state=mounted
+    tags:
+      - sourav
+

@@ -1,0 +1,18 @@
+##This program is to touch multiple items
+
+---
+- hosts: test
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: Create multiple items -      # "{{ item }}"
+    file:
+      state: touch
+      path: /home/shourabh/{{ item }}  ## If we use {{ item }} then no need to use {name: file1} in the below steps instead we can only use only  
+      owner: jenkins
+      group: jenkins
+      mode: 0777
+    with_items:                             ## "- file1" , "- file2", "- file3". 
+      - "file1"
+      - "file2" 
+      - "file3" 

@@ -1,0 +1,10 @@
+## This is prgram is used the read the files locally using "with_file" option
+
+---
+- hosts: test
+  tasks:
+  - debug:
+      msg: "{{ item }}"
+    with_file:          ## This option is use to read the files
+      - file1
+      - file2

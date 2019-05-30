@@ -1,0 +1,6 @@
+---
+- shell: cat /etc/motd
+  register: motd_output
+- debug: msg="STDOUT={{motd_output}}"
+- debug: msg="MOTD is empty"
+  when: motd_output.stdout == "" 

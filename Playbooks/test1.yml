@@ -1,0 +1,11 @@
+---
+- hosts: test
+  user: shourabh
+#  sudo: yes
+
+  tasks:
+  - name: Install elink package
+    yum: name=elinks state=present
+    
+  - name:  
+    

@@ -1,0 +1,19 @@
+---
+- hosts: test
+  tasks:
+  - name: Print stdout
+    command: echo "Hello World. How are you all!!!"
+    register: hello         ## It is used to store the output so that it can be used anywhere in the same program.
+ 
+  - name: Create a file
+    file: state=touch path=/home/test.txt mode=755
+    
+  - name: Copy the stored output
+    copy: src={{ hello.stdout }} dest=/home/test.txt 
+
+#  - debug: 
+#      msg="stdout={{ hello.stdout }}"   # This module prints statement during execution and can be useful for debugging variables or expressions 
+#  - debug: 
+#      msg: "stderr={{ hello.stderr }}"   # without necessary halting the playbook. More useful when used with "when:" directive
+#  - debug:  
+#      msg: "System {{ inventory_hostname }} has gateway {{ ansible_default_ipv4.gateway }}"

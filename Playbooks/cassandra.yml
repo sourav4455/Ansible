@@ -1,0 +1,155 @@
+---
+- hosts: all
+  name: Playbook for Post-install of Cassandra hosts
+  gather_facts: no
+  sudo: yes
+  vars_prompt:
+    - name : "cr_number"
+      prompt: Please Enter the SR/CR Number (SR-123456)
+      private: no
+
+  tasks:
+  - name: stop iptables
+    service: name=iptables state=stopped
+
+  - name: remove extra rpms
+    shell: rm -f /etc/yum.repos.d/public-yum-ol6.repo
+
+  - name: create cassandra group
+    group: name=cassandra gid=5884 state=present
+
+  - name: create cassandra user
+    user: name=cassandra uid=12505 group=cassandra home=/home/cassandra shell=/bin/bash createhome=yes comment={{ cr_number }}  state=present
+
+  - name: set password expire policy
+    shell: passwd -d cassandra;passwd -l cassandra;passwd -x 99999 -n 0 cassandra
+
+  - name: Cassandra home creation
+    lvol: vg=vg_root lv=lv_cassandra_home size=80G state=present
+    ignore_errors: yes
+
+  - name: Creating Filesystem Cassandra Home
+    filesystem: fstype=ext4 dev=/dev/vg_root/lv_cassandra_home
+
+  - name: Mounting Cassandra Home
+    mount: name=/home/cassandra src=/dev/vg_root/lv_cassandra_home fstype=ext4 state=mounted
+
+  - name: Change the Ownership fo Cassandra Home
+    shell: "chown cassandra:cassandra /home/cassandra && chmod 755 /home/cassandra"
+
+  - name: Installing hpssacli utility
+    yum: name=hpssacli state=present
+  
+  - name: Checking the slot number
+    shell: /usr/sbin/hpssacli ctrl all show|grep -i slot | awk '{print $6}'
+    register: slot_number
+  - debug: var=slot_number.stdout
+
+  - name: check number of disks
+    shell: hpssacli ctrl slot="{{ slot_number.stdout }}" pd allunassigned show |grep OK| wc -l
+    register: disks_number
+  - debug: var=disks_number.stdout
+
+  - name: Create the raid
+    shell: for n in `hpssacli ctrl slot="{{ slot_number.stdout }}" pd allunassigned show|grep -w physicaldrive|awk '{print $2}'`;do echo y|hpssacli ctrl slot='{{ slot_number.stdout }}' create type=ld drives=$n raid=0;done
+
+  - name: Create the Directories
+    file: path=/ngs{{ item }} state=directory mode=0755 owner=cassandra group=cassandra
+    with_sequence: start=1 end={{ disks_number.stdout }}
+    ignore_errors: yes
+   
+
+  - name: list Directories
+#    shell: /bin/ls -ld /ngs{1..{{ disks_number.stdout }}} |awk -F ":" '{print $1}'|sed '/^\s*$/d'
+#        shell: /bin/ls -ld /ngs{1..{{ disks_number.stdout }}} |awk '{print $9}'
+#            register: directories
+#                tags:
+#                       - list
+#                         - debug: var=directories.stdout_lines
+#                             ignore_errors: yes
+#                                 tags:
+#                                        - list1
+#
+#                                        #  - name: Creating Sub Directories
+#                                        #    file: path="{{ directories.stdout_lines }}"/app/cassandra state=directory mode=0755 owner=cassandra group=cassandra
+#                                        #    ignore_errors: yes
+#                                        #    tags:
+#                                        #       - sub
+#
+#                                          - name: Create the partitions
+#                                              shell: for n in `fdisk -l | grep -w Disk|egrep -v 'identifier|mapper|sda'|awk '{print $2}'|cut -d":" -f1`;do  parted -s $n mklabel msdos mkpart primary ext4 0% 100%;done
+#                                                  ignore_errors: yes
+#
+#                                                    - name: List Partitions
+#                                                        shell: fdisk -l | grep -i linux|egrep -v 'identifier|mapper|sda'|awk '{print $1}'
+#                                                            register: partitions
+#                                                                ignore_errors: yes
+#                                                                  - debug: var=partitions.stdout_lines
+#
+#                                                                    - name: Creating Filesystems
+#                                                                        filesystem: fstype=ext4 dev={{ item }}
+#                                                                            with_items: "{{ partitions.stdout_lines }}"
+#                                                                                ignore_errors: yes
+#
+#                                                                                  - name: Mounting the filesystems
+#                                                                                      mount: name={{ item.0 }} src={{ item.1 }} fstype=ext4 state=mounted
+#                                                                                          with_together:
+#                                                                                                  - "{{ directories.stdout_lines }}"
+#                                                                                                          - "{{ partitions.stdout_lines }}"
+#                                                                                                              ignore_errors: yes
+#
+#                                                                                                                - name: Set Numa off
+#                                                                                                                    shell: perl -pi -e "s/quiet/quiet crashkernel=auto numa=off/" /boot/grub/grub.conf
+#
+#                                                                                                                      - name: Creating Ulimits File
+#                                                                                                                          file: dest=/etc/security/limits.d/cassandra.conf state=touch mode=0644 owner=root group=root
+#                                                                                                                              ignore_errors: yes
+#
+#                                                                                                                                - name: Configure Ulimits
+#                                                                                                                                    lineinfile: dest=/etc/security/limits.d/cassandra.conf line="{{ item.line }}" state=present
+#                                                                                                                                        with_items:
+#                                                                                                                                                - { line: "cassandra  soft  nofile  1000000" }
+#                                                                                                                                                        - { line: "cassandra  hard  nofile  1000000" }
+#                                                                                                                                                                - { line: "cassandra  soft  noproc  96768" }
+#                                                                                                                                                                        - { line: "cassandra  hard  noproc  96768" }
+#                                                                                                                                                                            ignore_errors: yes
+#
+#                                                                                                                                                                              - name: set kernel parameter settings
+#                                                                                                                                                                                  sysctl: name="{{ item.parameter }}" value="{{ item.value }}" sysctl_set=yes state=present reload=yes
+#                                                                                                                                                                                      with_items:
+#                                                                                                                                                                                              - { "parameter": "fs.file-max", "value": "260000" }
+#                                                                                                                                                                                                      - { "parameter": "net.core.netdev_max_backlog", "value": "30000" }
+#                                                                                                                                                                                                              - { "parameter": "net.core.rmem_max", "value": "67108864" }
+#                                                                                                                                                                                                                      - { "parameter": "net.core.wmem_max", "value": "67108864" }
+#                                                                                                                                                                                                                              - { "parameter": "net.ipv4.tcp_congestion_control", "value": "cubic" }
+#                                                                                                                                                                                                                                      - { "parameter": "net.ipv4.tcp_max_syn_backlog", "value": "8192" }
+#                                                                                                                                                                                                                                              - { "parameter": "net.ipv4.tcp_moderate_rcvbuf", "value": "1" }
+#                                                                                                                                                                                                                                                      - { "parameter": "net.ipv4.tcp_rmem", "value": "4096 87380 33554432" }
+#                                                                                                                                                                                                                                                              - { "parameter": "net.ipv4.tcp_sack", "value": "1" }
+#                                                                                                                                                                                                                                                                      - { "parameter": "net.ipv4.tcp_timestamps", "value": "1" }
+#                                                                                                                                                                                                                                                                              - { "parameter": "net.ipv4.tcp_tw_recycle", "value": "0" }
+#                                                                                                                                                                                                                                                                                      - { "parameter": "net.ipv4.tcp_tw_reuse", "value": "1" }
+#                                                                                                                                                                                                                                                                                              - { "parameter": "net.ipv4.tcp_wmem", "value": "4096 65536 33554432" }
+#                                                                                                                                                                                                                                                                                                      - { "parameter": "vm.swappiness", "value": "1" }
+#                                                                                                                                                                                                                                                                                                              - { "parameter": "net.ipv4.conf.all.secure_redirects", "value": "0" }
+#                                                                                                                                                                                                                                                                                                                      - { "parameter": "net.ipv4.conf.all.send_redirects", "value": "0" }
+#                                                                                                                                                                                                                                                                                                                              - { "parameter": "net.ipv4.ip_forward", "value": "0" }
+#                                                                                                                                                                                                                                                                                                                                      - { "parameter": "kernel.randomize_va_space", "value": "2" }
+#                                                                                                                                                                                                                                                                                                                                              - { "parameter": "net.ipv4.conf.all.accept_redirects", "value": "0" }
+#                                                                                                                                                                                                                                                                                                                                                      - { "parameter": "net.ipv4.conf.default.secure_redirects", "value": "0" }
+#                                                                                                                                                                                                                                                                                                                                                              - { "parameter": "net.ipv4.conf.default.accept_redirects", "value": "0" }
+#                                                                                                                                                                                                                                                                                                                                                                      - { "parameter": "net.ipv4.conf.default.log_martians", "value": "1" }
+#                                                                                                                                                                                                                                                                                                                                                                              - { "parameter": "net.ipv4.conf.all.log_martians", "value": "1" }
+#                                                                                                                                                                                                                                                                                                                                                                                      - { "parameter": "net.ipv4.conf.default.send_redirects", "value": "0" }
+#                                                                                                                                                                                                                                                                                                                                                                                          
+#                                                                                                                                                                                                                                                                                                                                                                                              ignore_errors: yes
+#                                                                                                                                                                                                                                                                                                                                                                                                  tags:
+#                                                                                                                                                                                                                                                                                                                                                                                                         - kernel
+#
+#                                                                                                                                                                                                                                                                                                                                                                                                           - name: Creating Sub Directories
+#                                                                                                                                                                                                                                                                                                                                                                                                               file: path={{ directories.stdout_lines }}/app/cassandra state=directory mode=0755 owner=cassandra group=cassandra
+#                                                                                                                                                                                                                                                                                                                                                                                                                   ignore_errors: yes
+#                                                                                                                                                                                                                                                                                                                                                                                                                       tags:
+#                                                                                                                                                                                                                                                                                                                                                                                                                              - sub
+#
+#                                                                                                                                                                                                                                                                                                                                                                                                                              

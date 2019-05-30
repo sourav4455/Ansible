@@ -1,0 +1,21 @@
+---   # This is to install httpd on sourav_test
+
+- hosts: test
+  remote_user: shourabh
+  become: yes
+  become_method: sudo
+  connection: ssh         # This is by default connection. We have 2 more connection type : permiko and local connections
+  gather_facts: yes
+  vars: 
+    username: myuser
+
+  tasks:
+  - name : Install HTTPD server on sourav_test
+    yum: name=httpd state=latest
+    notify: 
+    - startservice
+   
+  handlers:               # Handler is called in the end of the play and only when the related task of package installation is successfully done
+  - name: startservice
+    service: name=httpd state=restarted enabled=yes 
+

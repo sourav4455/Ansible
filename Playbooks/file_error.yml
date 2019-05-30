@@ -1,0 +1,17 @@
+## This program is for error handing
+
+---
+- hosts: test
+  tasks:
+  - name: Copy file to server
+    copy: src=/opt/program1.sh dest=/home/shourabh/program1.sh mode=0755
+    
+  - name: Run the script
+    command: /home/shourabh/program1.sh
+    ignore_errors: yes
+    register: comm_opt
+
+  - debug:
+      msg: "STDOUT - {{ comm_opt.stdout }}"
+  - debug:
+      msg: "STDERR - {{ comm_opt.stderr }}"

@@ -1,0 +1,12 @@
+## This program is to test conditions using variables example
+
+---
+- hosts: test
+#  vars: 
+#    create_file: true
+  tasks:
+  - name: Create file
+    file:
+      state: touch
+      path: /home/shourabh/test.txt
+#    when: not create_file   ## The "not" used will skip the file creation step

@@ -1,0 +1,14 @@
+## This programs shows how to use conditions
+
+
+---
+- hosts: test
+  become: yes
+  become_method: sudo
+  gather_facts: yes  
+  tasks:
+  - name: If OS is Redhat install apache
+    yum:
+      name: httpd
+      state: latest
+    when: ansible_os_family == "RedHat"    #If gather_facts is set to "no" then this program will not work as "ansible_os_family" is ansible facts.

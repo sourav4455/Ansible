@@ -1,0 +1,15 @@
+# Command :-  ansible-playbook -i hosts install_elinks.yml --extra-var "option=latest" -k -K -s
+
+---    # Install elinks software on these hosts
+
+- hosts: test
+  user: shourabh
+  sudo: yes
+#  sudo:ssh        # If we select this option then we don need to use -K and -s options
+  gather_facts: no
+  vars:
+  tasks:
+  - name: Install elinks on test machines
+    action: yum name=elinks state={{ option }}
+
+

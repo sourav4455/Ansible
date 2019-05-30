@@ -1,0 +1,10 @@
+# Put the date and time on the client servers
+
+---
+- hosts: test
+  vars:
+    date_time: "{{ ansible_date_time.date }} {{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}"
+  
+  tasks:
+  - name: Write date time to the file on the server
+    template: src=template1.j2 dest=/home/shourabh/date_time.txt

@@ -1,0 +1,23 @@
+---
+- hosts: test
+  gather_facts: yes
+  tasks:
+  - name: Upload a file to target if it doesnt exist
+    copy:
+      src: /opt/program1.sh
+      dest: /home/shourabh/program1.sh
+      mode: 0755
+
+  - name: If line not there then add it
+    lineinfile:
+      state: present
+      dest: /home/shourabh/program1.sh
+      regexp: "^Hostname="
+#      line: Hostname={{ ansible_hostname }}
+      line: Hostname=abcdef
+
+  - name: Run the program
+    shell: /home/shourabh/program1.sh
+    register: program_output
+
+  - debug: msg="stdout={{ program_output }}"

@@ -1,0 +1,7 @@
+#Ansible tries to find out the facts from the "/etc/ansible/facts.d" directory.
+#command :
+
+---
+- hosts: test
+  tasks:
+  - debug: msg="{{ ansible_local.preference }"

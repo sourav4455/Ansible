@@ -1,0 +1,9 @@
+### This program is to see how we use ansible vault
+#
+#Command : ansible-playbook test.demo.yml --ask-vault-pass                         Pass=s******h
+
+---
+
+- hosts: test
+  roles:
+   - test_demo

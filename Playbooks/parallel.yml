@@ -1,0 +1,16 @@
+# This program tells how to use parallelism like "-f" option in the playbook itself
+
+---
+- hosts: tests
+  become: yes
+  max_fail_percentage: 30          # It exits if 30% hosts fail to execute
+#  serial: 3                       # You can use any of the option for "serial"
+#  serial: "30%"
+  serial: 
+   - 1
+   - 5
+   - 10
+
+  tasks:
+  - name: Install elinks package
+    yum: pkg=elinks state=latest

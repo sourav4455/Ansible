@@ -1,0 +1,20 @@
+## This is a program to check how to use templates
+
+---
+- hosts: test
+  become: yes
+  vars: 
+    description: "{{ ansible_hostname }}"
+
+  tasks:
+  - name: Write the index file
+    template: src=template.j2 dest=/var/www/html/index.html
+    notify:
+    - restart apache
+
+  - name: Ensure service is running
+    service: name=httpd state=running
+
+  handlers:
+  - name: restart apache
+    service: name=httpd state=restarted  

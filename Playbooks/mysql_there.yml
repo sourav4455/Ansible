@@ -1,0 +1,21 @@
+## This program shows the use of error handling, to register the output and to use tags
+#Command : ansible-playbook -i hosts mysql_there.yml --tags "startup" -K -s
+#          ansible-playbook -i hosts mysql_there.yml --tags "packages" -K -s
+#          ansible-playbook -i hosts mysql_there.yml --skip-tags "startup" -K -s
+#          ansible-playbook -i hosts mysql_there.yml --skip-tags "packages" -K -s
+---
+- hosts: test
+  become: yes
+  tasks:
+  - name: Install sql server
+    yum: name=mysql-server state=latest
+    ignore_errors: yes
+    register: there
+    tags:
+      - packages
+
+  - name: Start mysql if there
+    service: name=mysqld state=started
+    register: running
+    tags:
+      - startup

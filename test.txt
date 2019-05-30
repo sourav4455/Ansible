@@ -1,0 +1,2 @@
+Hello all !!
+File sent usig ansible

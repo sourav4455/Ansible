@@ -1,0 +1,17 @@
+---     # Testing how variables works in the variable section of the playbook.
+
+- hosts: '{{ myvars }}'
+  remote_user: shourabh
+  become: yes
+  become_method: sudo
+  connection: ssh
+  gather_facts: '{{ gather }}'
+  vars: 
+    myvars: test
+    gather: yes
+    pkg: telnet
+ 
+  tasks:
+  - name: Install the indicated package
+    yum: name='{{ pkg }}' state=latest
+
